@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Workout" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>May Challenge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --muted: #888;
+      --cf: #c8f542;
+      --gym: #42c8f5;
+      --run: #f5a742;
+      --rec: #a78bfa;
+      --green: #4ade80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x: hidden; }
+
+    .app { max-width: 480px; margin: 0 auto; min-height: 100vh; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+
+    /* Header */
+    .header { padding: 24px 20px 12px; }
+    .header-top { display: flex; align-items: flex-end; justify-content: space-between; }
+    .header-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; letter-spacing: 1px; color: var(--text); }
+    .header-month { font-family: 'Bebas Neue', sans-serif; font-size: 52px; line-height: 1; color: var(--cf); }
+    .header-sub { font-size: 13px; color: var(--muted); margin-top: 4px; letter-spacing: 0.03em; }
+
+    /* Progress bar */
+    .progress-bar-wrap { padding: 12px 20px; }
+    .progress-bar-bg { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--cf); border-radius: 2px; transition: width 0.4s ease; }
+    .progress-label { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--muted); }
+
+    /* Stats row */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 20px 20px; }
+    .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+    .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--text); line-height: 1; }
+    .stat-num.accent { color: var(--cf); }
+    .stat-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Calendar */
+    .section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 20px 10px; }
+    .calendar-grid { padding: 0 20px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 24px; }
+    .day-header { font-size: 10px; color: var(--muted); text-align: center; padding: 4px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+    .day { border: 0.5px solid var(--border); border-radius: 8px; padding: 5px 2px; cursor: pointer; min-height: 52px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; background: var(--surface); }
+    .day:active { transform: scale(0.95); }
+    .day.empty { border: none; background: transparent; cursor: default; }
+    .day.today { border-color: rgba(200,245,66,0.5); }
+    .day.selected { border-color: var(--cf); border-width: 1.5px; }
+    .day.done { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); }
+    .day-num { font-size: 11px; font-weight: 500; color: var(--muted); }
+    .day.today .day-num { color: var(--cf); font-weight: 600; }
+    .day-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .day-dot.cf { background: var(--cf); }
+    .day-dot.gym { background: var(--gym); }
+    .day-dot.run { background: var(--run); }
+    .day-dot.rec { background: var(--rec); }
+    .day-check { font-size: 9px; color: var(--green); }
+
+    /* Detail panel */
+    .detail { margin: 0 20px 24px; border: 0.5px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; }
+    .detail-head { padding: 16px 20px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .detail-type { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
+    .detail-type.cf { background: rgba(200,245,66,0.12); color: var(--cf); }
+    .detail-type.gym { background: rgba(66,200,245,0.12); color: var(--gym); }
+    .detail-type.run { background: rgba(245,167,66,0.12); color: var(--run); }
+    .detail-type.rec { background: rgba(167,139,250,0.12); color: var(--rec); }
+    .detail-date { font-size: 13px; color: var(--muted); }
+    .detail-body { padding: 16px 20px; }
+    .exercise-list { display: flex; flex-direction: column; gap: 8px; }
+    .ex { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface2); border: 0.5px solid transparent; cursor: pointer; transition: all 0.15s; }
+    .ex:active { transform: scale(0.98); }
+    .ex.checked { background: rgba(74,222,128,0.06); border-color: rgba(74,222,128,0.2); }
+    .ex-cb { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid rgba(255,255,255,0.2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all 0.15s; }
+    .ex.checked .ex-cb { background: var(--green); border-color: var(--green); color: #0a0a0a; }
+    .ex-info { flex: 1; }
+    .ex-name { font-size: 14px; color: var(--text); font-weight: 400; }
+    .ex.checked .ex-name { color: var(--muted); text-decoration: line-through; }
+    .ex-detail { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .done-btn { width: 100%; margin-top: 14px; padding: 14px; border-radius: 10px; border: 1.5px solid rgba(200,245,66,0.3); background: transparent; color: var(--cf); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; letter-spacing: 0.02em; transition: all 0.15s; }
+    .done-btn:active { transform: scale(0.98); }
+    .done-btn.completed { background: rgba(200,245,66,0.08); border-color: var(--cf); }
+
+    /* Legend */
+    .legend { padding: 0 20px 32px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">MAY <span class="header-month">CHALLENGE</span></div>
+        <div class="header-sub">31 days — no days off</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="progress-label"><span id="prog-done">0 done</span><span id="prog-pct">0%</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num accent" id="s-done">0</div><div class="stat-lbl">Done</div></div>
+    <div class="stat"><div class="stat-num" id="s-left">31</div><div class="stat-lbl">Left</div></div>
+    <div class="stat"><div class="stat-num accent" id="s-streak">0</div><div class="stat-lbl">Streak</div></div>
+    <div class="stat"><div class="stat-num" id="s-cf">0</div><div class="stat-lbl">CrossFit</div></div>
+  </div>
+
+  <div class="section-title">May 2026</div>
+  <div class="calendar-grid" id="calendar"></div>
+
+  <div class="detail" id="detail" style="display:none;"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--cf)"></div> CrossFit</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gym)"></div> Gym</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--run)"></div> Run</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--rec)"></div> Recovery</div>
+  </div>
+</div>
+
+<script>
+const PLANS = {
+  crossfit: {
+    label: 'CrossFit', cls: 'cf', dotCls: 'cf',
+    exercises: [
+      { name: 'Snatch', detail: '5×3 @ 70% 1RM' },
+      { name: 'Clean & jerk', detail: '5×2 @ 75% 1RM' },
+      { name: 'Box jumps', detail: '4×10 reps' },
+      { name: 'Double-unders', detail: '3×50 reps' },
+      { name: 'Wall balls', detail: '3×20 reps' },
+      { name: 'Pull-ups', detail: '3×10 reps' },
+    ]
+  },
+  gym_upper: {
+    label: 'Gym — upper', cls: 'gym', dotCls: 'gym',
+    exercises: [
+      { name: 'Bench press', detail: '4×8 reps' },
+      { name: 'Bicep curls', detail: '3×12 each arm' },
+      { name: 'Overhead press', detail: '3×8 reps' },
+      { name: 'Snatch practice', detail: '4×3 light technique' },
+      { name: 'Tricep pushdown', detail: '3×15 reps' },
+      { name: 'Face pulls', detail: '3×15 reps' },
+    ]
+  },
+  gym_lower: {
+    label: 'Gym — lower', cls: 'gym', dotCls: 'gym',
+    exercises: [
+      { name: 'Clean & jerk', detail: '4×3 @ 70% 1RM' },
+      { name: 'Leg extensions', detail: '4×12 reps' },
+      { name: 'Leg curls', detail: '4×12 reps' },
+      { name: 'Romanian deadlift', detail: '3×10 reps' },
+      { name: 'Calf raises', detail: '3×20 reps' },
+      { name: 'Core circuit', detail: '3 rounds — planks, sit-ups' },
+    ]
+  },
+  run_easy: {
+    label: 'Easy run', cls: 'run', dotCls: 'run',
+    exercises: [
+      { name: 'Warm-up walk', detail: '5 min' },
+      { name: 'Easy run', detail: '20–25 min conversational pace' },
+      { name: 'Cool-down walk', detail: '5 min' },
+      { name: 'Hip flexor stretch', detail: '2×45 sec each side' },
+    ]
+  },
+  run_tempo: {
+    label: 'Tempo run', cls: 'run', dotCls: 'run',
+    exercises: [
+      { name: 'Warm-up', detail: '10 min easy jog' },
+      { name: 'Tempo intervals', detail: '4×5 min hard / 2 min easy' },
+      { name: 'Cool-down', detail: '10 min easy jog' },
+      { name: 'Foam roll legs', detail: '5 min' },
+    ]
+  },
+  active_recovery: {
+    label: 'Active recovery', cls: 'rec', dotCls: 'rec',
+    exercises: [
+      { name: 'Light walk or bike', detail: '20 min easy' },
+      { name: 'Mobility work', detail: '10 min — hips & shoulders' },
+      { name: 'Foam rolling', detail: '10 min full body' },
+    ]
+  },
+};
+
+// May 1 2026 = Thursday → Mon-based index = 3
+const START_OFFSET = 3;
+const TOTAL = 31;
+const WEEKLY = ['crossfit','gym_lower','crossfit','run_easy','gym_upper','run_tempo','active_recovery'];
+const DOW_NAMES = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_HEADERS = ['M','T','W','T','F','S','S'];
+
+function getPlanKey(d) {
+  return WEEKLY[(START_OFFSET + d - 1) % 7];
+}
+
+// State
+let state = {};
+try { state = JSON.parse(localStorage.getItem('wt26') || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem('wt26', JSON.stringify(state)); } catch(e) {} }
+function getDay(d) { if (!state[d]) state[d] = { done: false, exChecked: {} }; return state[d]; }
+
+let selected = null;
+const today = new Date();
+const isThisMonth = today.getFullYear() === 2026 && today.getMonth() === 4;
+const todayDate = isThisMonth ? today.getDate() : null;
+
+function updateStats() {
+  let done = 0, cfDone = 0;
+  for (let d = 1; d <= TOTAL; d++) {
+    if (state[d] && state[d].done) {
+      done++;
+      if (getPlanKey(d) === 'crossfit') cfDone++;
+    }
+  }
+  let streak = 0;
+  const max = todayDate || TOTAL;
+  for (let d = max; d >= 1; d--) {
+    if (state[d] && state[d].done) streak++;
+    else break;
+  }
+  const pct = Math.round(done / TOTAL * 100);
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-left').textContent = TOTAL - done;
+  document.getElementById('s-streak').textContent = streak;
+  document.getElementById('s-cf').textContent = cfDone;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-done').textContent = done + ' done';
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+function renderCalendar() {
+  const cal = document.getElementById('calendar');
+  cal.innerHTML = '';
+  DAY_HEADERS.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'day-header';
+    el.textContent = h;
+    cal.appendChild(el);
+  });
+  for (let i = 0; i < START_OFFSET; i++) {
+    const el = document.createElement('div');
+    el.className = 'day empty';
+    cal.appendChild(el);
+  }
+  for (let d = 1; d <= TOTAL; d++) {
+    const key = getPlanKey(d);
+    const plan = PLANS[key];
+    const ds = state[d] || {};
+    const el = document.createElement('div');
+    let cls = 'day';
+    if (ds.done) cls += ' done';
+    if (d === todayDate) cls += ' today';
+    if (d === selected) cls += ' selected';
+    el.className = cls;
+    el.innerHTML = `<div class="day-num">${d}</div><div class="day-dot ${plan.dotCls}"></div>${ds.done ? '<div class="day-check">✓</div>' : ''}`;
+    el.addEventListener('click', () => { selected = d; renderCalendar(); renderDetail(); });
+    cal.appendChild(el);
+  }
+}
+
+function renderDetail() {
+  const det = document.getElementById('detail');
+  if (!selected) { det.style.display = 'none'; return; }
+  det.style.display = 'block';
+  const d = selected;
+  const key = getPlanKey(d);
+  const plan = PLANS[key];
+  const ds = getDay(d);
+  const dowName = DOW_NAMES[(START_OFFSET + d - 1) % 7];
+
+  const exItems = plan.exercises.map((ex, i) => {
+    const checked = ds.exChecked && ds.exChecked[i];
+    return `<div class="ex${checked?' checked':''}" data-ex="${i}">
+      <div class="ex-cb">${checked ? '✓' : ''}</div>
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-detail">${ex.detail}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  det.innerHTML = `
+    <div class="detail-head">
+      <div class="detail-type ${plan.cls}">${plan.label}</div>
+      <div class="detail-date">${dowName}, May ${d}</div>
+    </div>
+    <div class="detail-body">
+      <div class="exercise-list">${exItems}</div>
+      <button class="done-btn${ds.done?' completed':''}" id="done-btn">
+        ${ds.done ? '✓ Workout complete!' : 'Mark workout done'}
+      </button>
+    </div>`;
+
+  det.querySelectorAll('.ex').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = parseInt(el.dataset.ex);
+      const ds2 = getDay(d);
+      if (!ds2.exChecked) ds2.exChecked = {};
+      ds2.exChecked[i] = !ds2.exChecked[i];
+      save();
+      renderDetail();
+    });
+  });
+
+  document.getElementById('done-btn').addEventListener('click', () => {
+    const ds2 = getDay(d);
+    ds2.done = !ds2.done;
+    save();
+    renderCalendar();
+    renderDetail();
+    updateStats();
+  });
+
+  det.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Auto-select today
+if (todayDate) selected = todayDate;
+
+renderCalendar();
+renderDetail();
+updateStats();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/workout-tracker/sw.js")}</script>
+</body>
+</html>
